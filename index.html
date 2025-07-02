@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sales Forecasting Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #1e2a38;
+      color: #f4f7fc;
+    }
+    .card {
+      border-radius: 10px;
+      background-color: #273747;
+      color: #ffffff;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .stat-card {
+      background-color: #d4af37;
+      color: #1e2a38;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: bold;
+      min-height: 120px;
+    }
+    .chart-container {
+      height: 400px;
+      width: 100%;
+    }
+    .upload-section, .suggestion-section {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .btn-primary {
+      background-color: #d4af37;
+      border-color: #d4af37;
+      color: #1e2a38;
+    }
+    .btn-primary:hover {
+      background-color: #b8952d;
+      border-color: #b8952d;
+    }
+    .suggestion-card {
+      background-color: #273747;
+      color: #f4f7fc;
+      padding: 15px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Sales Forecasting</a>
+</nav>
+
+<div class="container mt-4">
+
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card stat-card">
+        <h4>Total Sales</h4>
+        <h2 id="totalSales">₹0</h2>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card stat-card">
+        <h4>Predicted Sales</h4>
+        <h2 id="predictedSales">₹0</h2>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card stat-card">
+        <h4>Growth Rate</h4>
+        <h2 id="growthRate">0%</h2>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title">Sales Forecasting</h3>
+          <div class="d-flex justify-content-end mb-3">
+            <select id="chartTypeSelector" class="form-select w-auto" onchange="changeChartType()">
+              <option value="line">Line</option>
+              <option value="bar">Bar</option>
+              <option value="pie">Pie</option>
+              <option value="histogram">Histogram</option>
+            </select>
+          </div>
+          <div class="chart-container">
+            <canvas id="salesForecastChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="upload-section">
+    <input type="file" id="csvFileInput" accept=".csv">
+    <button class="btn btn-primary" onclick="handleFileUpload()">Upload & Predict</button>
+  </div>
+
+  <div class="suggestion-section">
+    <div class="card suggestion-card">
+      <h4>Suggestions</h4>
+      <ul id="suggestionList"></ul>
+    </div>
+  </div>
+
+  <!-- ✅ CHARMS ANALYSIS SECTION -->
+  <div class="suggestion-section mt-4">
+    <div class="card suggestion-card">
+      <h4>CHARMS Analysis</h4>
+      <ul id="charmsList"></ul>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const ctx = document.getElementById('salesForecastChart').getContext('2d');
+  let chartType = 'line';
+  let chartData = {
+    labels: [],
+    datasets: []
+  };
+  let salesForecastChart;
+
+  function createChart(type) {
+    if (salesForecastChart) salesForecastChart.destroy();
+    salesForecastChart = new Chart(ctx, {
+      type: type === 'histogram' ? 'bar' : type,
+      data: chartData,
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  function formatIndianCurrency(num) {
+    return '₹' + num.toLocaleString('en-IN');
+  }
+
+  function handleFileUpload() {
+    const fileInput = document.getElementById('csvFileInput');
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert('Please select a CSV file.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      const csvData = event.target.result;
+      const lines = csvData.split('\n').slice(1);
+      const labels = [];
+      const sales = [];
+
+      lines.forEach(line => {
+        const parts = line.split(',');
+        if (parts.length >= 6) {
+          labels.push(parts[0]);
+          sales.push(parseInt(parts[5]));
+        }
+      });
+
+      const totalSales = sales.reduce((a, b) => a + b, 0);
+
+      const predictedSales = [];
+      let lastValue = sales[sales.length - 1];
+      for (let i = 1; i <= 10; i++) {
+        lastValue += Math.round(lastValue * 0.1 + Math.random() * 500);
+        predictedSales.push(lastValue);
+        labels.push(`Future ${i}`);
+      }
+
+      const totalPredicted = predictedSales.reduce((a, b) => a + b, 0);
+      const growth = ((totalPredicted / totalSales) * 100 - 100).toFixed(2);
+
+      document.getElementById('totalSales').innerText = formatIndianCurrency(totalSales);
+      document.getElementById('predictedSales').innerText = formatIndianCurrency(totalPredicted);
+      document.getElementById('growthRate').innerText = `${growth}%`;
+
+      showSuggestions(growth);
+      showCharmsAnalysis(growth);
+
+      chartData.labels = labels;
+      if (chartType === 'histogram') {
+        const bins = Array.from(new Set(sales.concat(predictedSales).map(x => Math.floor(x / 1000) * 1000)));
+        const frequencies = bins.map(bin => sales.concat(predictedSales).filter(x => x >= bin && x < bin + 1000).length);
+
+        chartData = {
+          labels: bins.map(bin => `${bin} - ${bin + 999}`),
+          datasets: [{
+            label: 'Frequency',
+            data: frequencies,
+            backgroundColor: 'rgba(75, 192, 192, 0.7)'
+          }]
+        };
+      } else if (chartType === 'pie') {
+        chartData = {
+          labels: ['Past Sales', 'Predicted Sales'],
+          datasets: [{
+            label: 'Sales',
+            data: [totalSales, totalPredicted],
+            backgroundColor: ['rgba(75, 192, 192, 0.7)', 'rgba(255, 99, 132, 0.7)']
+          }]
+        };
+      } else {
+        chartData = {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Past Sales',
+              data: sales.concat(new Array(10).fill(null)),
+              borderColor: 'rgba(75, 192, 192, 1)',
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              fill: true
+            },
+            {
+              label: 'Predicted Sales',
+              data: new Array(sales.length).fill(null).concat(predictedSales),
+              borderColor: 'rgba(255, 99, 132, 1)',
+              backgroundColor: 'rgba(255, 99, 132, 0.2)',
+              fill: true
+            }
+          ]
+        };
+      }
+
+      createChart(chartType);
+    };
+    reader.readAsText(file);
+  }
+
+  function changeChartType() {
+    chartType = document.getElementById('chartTypeSelector').value;
+    if (chartData.labels.length > 0) {
+      handleFileUpload();
+    } else {
+      createChart(chartType);
+    }
+  }
+
+  function showSuggestions(growth) {
+    const suggestionList = document.getElementById('suggestionList');
+    suggestionList.innerHTML = '';
+    let suggestions = [];
+
+    if (growth > 20) {
+      suggestions.push('Your sales forecast shows significant growth. Consider increasing production.');
+    } else if (growth > 10) {
+      suggestions.push('Sales are growing steadily. Maintain current strategies and monitor trends.');
+    } else {
+      suggestions.push('Growth is moderate. Explore new marketing strategies to boost sales.');
+    }
+
+    suggestions.forEach(suggestion => {
+      const li = document.createElement('li');
+      li.innerText = suggestion;
+      suggestionList.appendChild(li);
+    });
+  }
+
+  function showCharmsAnalysis(growth) {
+    const charmsList = document.getElementById('charmsList');
+    charmsList.innerHTML = '';
+
+    const numericGrowth = parseFloat(growth);
+    let insights = [];
+
+    insights.push("🧠 Cultural: Align promotions with local festivals and customs.");
+    insights.push("📜 Historical: Review past sales data for seasonal patterns.");
+    insights.push("🎨 Artistic: Use appealing visuals and design in your marketing.");
+    insights.push("🙏 Religious: Plan around major religious events and holidays.");
+    insights.push("📈 Market: Monitor competitors and adjust prices accordingly.");
+    insights.push("🤝 Social: Leverage social media trends and influencer campaigns.");
+
+    if (numericGrowth > 20) {
+      insights.push("🔥 Market demand is booming! Consider aggressive marketing.");
+    } else if (numericGrowth > 10) {
+      insights.push("📊 Steady rise – strengthen your market presence gradually.");
+    } else {
+      insights.push("🔍 Explore cultural/social campaigns to boost interest.");
+    }
+
+    insights.forEach(item => {
+      const li = document.createElement('li');
+      li.innerText = item;
+      charmsList.appendChild(li);
+    });
+  }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
