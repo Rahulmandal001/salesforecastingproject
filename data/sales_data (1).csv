@@ -1,0 +1,31 @@
+Date,Product,Category,Units Sold,Unit Price,Total Sales,Region,Salesperson
+01-01-2025,Smartphone,Electronics,25,400,10000,North,John Doe
+01-01-2025,Laptop,Electronics,10,800,8000,South,Jane Smith
+02-01-2025,Headphones,Accessories,50,30,1500,East,Ali Khan
+02-01-2025,Smartwatch,Electronics,15,200,3000,West,Maria Lee
+03-01-2025,Keyboard,Accessories,20,50,1000,North,John Doe
+03-01-2025,Monitor,Electronics,8,250,2000,South,Jane Smith
+04-01-2025,Mouse,Accessories,30,20,600,East,Ali Khan
+04-01-2025,Tablet,Electronics,12,350,4200,West,Maria Lee
+05-01-2025,Phone Case,Accessories,100,10,1000,North,John Doe
+05-01-2025,Charger,Accessories,60,15,900,South,Jane Smith
+06-01-2025,Smart TV,Electronics,5,1200,6000,East,Ali Khan
+06-01-2025,USB Cable,Accessories,80,5,400,West,Maria Lee
+07-01-2025,Router,Electronics,18,100,1800,North,John Doe
+07-01-2025,Power Bank,Accessories,40,25,1000,South,Jane Smith
+08-01-2025,Speakers,Accessories,25,60,1500,East,Ali Khan
+08-01-2025,Gaming Console,Electronics,7,500,3500,West,Maria Lee
+09-01-2025,Webcam,Accessories,15,40,600,North,John Doe
+09-01-2025,Microphone,Accessories,10,70,700,South,Jane Smith
+10-01-2025,Drone,Electronics,3,1500,4500,East,Ali Khan
+10-01-2025,Tripod,Accessories,22,35,770,West,Maria Lee
+11-01-2025,VR Headset,Electronics,4,900,3600,North,John Doe
+11-01-2025,Memory Card,Accessories,60,15,900,South,Jane Smith
+12-01-2025,Laptop Stand,Accessories,18,45,810,East,Ali Khan
+12-01-2025,Tablet,Electronics,9,350,3150,West,Maria Lee
+13-01-2025,Phone Holder,Accessories,45,12,540,North,John Doe
+13-01-2025,Wireless Charger,Accessories,28,20,560,South,Jane Smith
+14-01-2025,Bluetooth Speaker,Accessories,35,40,1400,East,Ali Khan
+14-01-2025,Action Camera,Electronics,6,700,4200,West,Maria Lee
+15-01-2025,Laptop,Electronics,12,800,9600,North,John Doe
+15-01-2025,Mouse Pad,Accessories,55,8,440,South,Jane Smith

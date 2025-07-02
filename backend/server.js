@@ -7,18 +7,11 @@ const fs = require('fs');
 const app = express();
 const port = 3000;
 
-// Set up multer for file uploading
 const upload = multer({ dest: 'uploads/' });
+app.use(express.static(path.join(__dirname, '../frontend')));
 
-// Serve static files (e.g., frontend)
-app.use(express.static(path.join(__dirname, 'public')));
+let pastData = [];
 
-// Create 'uploads' directory if it doesn't exist
-if (!fs.existsSync('uploads')) {
-  fs.mkdirSync('uploads');
-}
-
-// Endpoint to handle the CSV upload
 app.post('/upload', upload.single('salesData'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
@@ -27,53 +20,49 @@ app.post('/upload', upload.single('salesData'), (req, res) => {
   const filePath = path.join(__dirname, req.file.path);
   const results = [];
 
-  // Parse the CSV file and extract sales data
   fs.createReadStream(filePath)
     .pipe(csvParser())
     .on('headers', (headers) => {
-      // Log headers to check for any extra spaces or case mismatches
-      const cleanedHeaders = headers.map(header => header.trim());
-      console.log('Cleaned CSV Headers:', cleanedHeaders);  // Log cleaned headers
+      console.log('CSV Headers:', headers);
     })
     .on('data', (row) => {
-      // Log the row to check the parsed data
-      console.log('Parsed row:', row);
-
-      // Clean up the row by trimming extra spaces in row keys
       const cleanedRow = {};
       for (let key in row) {
-        cleanedRow[key.trim()] = row[key];  // Trim any extra spaces in row keys
+        cleanedRow[key.trim()] = row[key];
       }
 
-      // Ensure 'Date' and 'Sales' exist and push the data to the results array
       results.push({
-        date: cleanedRow.Date,  // Access 'Date' after trimming spaces
-        sales: parseFloat(cleanedRow.Sales)  // Access 'Sales' after trimming spaces
+        date: cleanedRow.Date,
+        sales: parseFloat(cleanedRow['Total Sales']),
+        product: cleanedRow.Product,
+        category: cleanedRow.Category,
+        region: cleanedRow.Region,
+        salesperson: cleanedRow.Salesperson,
       });
     })
     .on('end', () => {
-      // Log the parsed results
-      console.log('Parsed results:', results);
-
-      // Simulate sales forecasting logic here
       const predictedSales = forecastSales(results);
 
-      // Return the processed data
+      pastData = [...results];
+
       res.json({
-        dates: results.map(row => row.date),  // Send dates as part of the response
-        predictions: predictedSales           // Send predicted sales as part of the response
+        dates: results.map(row => row.date),
+        actualSales: results.map(row => row.sales),
+        predictions: predictedSales,
+        extraData: results,
       });
 
-      // Clean up the uploaded file
       fs.unlinkSync(filePath);
     });
 });
 
-// Simulated sales forecasting function
 function forecastSales(data) {
-  // Basic logic to "predict" sales (for simplicity, add a 10% growth)
-  return data.map(row => row.sales * 1.10);
+  return data.map(row => (row.sales * 1.10).toFixed(2)); // 10% increase
 }
+
+app.get('/past-data', (req, res) => {
+  res.json({ pastData });
+});
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
